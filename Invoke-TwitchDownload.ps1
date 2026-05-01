@@ -1,4 +1,4 @@
-#requires -version 6.0
+#Requires -PSEdition Core
 
 <#
 .SYNOPSIS
@@ -92,25 +92,25 @@
 #>
 
 param(
-    [Parameter(Mandatory,ParameterSetName='subscriptions')]
-    [Parameter(Mandatory,ParameterSetName='subscriptions_name')]
-    [Parameter(Mandatory,ParameterSetName='subscriptions_id')]
-    [Parameter(Mandatory,ParameterSetName='subscriptions_self')]
+    [Parameter(Mandatory, ParameterSetName = 'subscriptions')]
+    [Parameter(Mandatory, ParameterSetName = 'subscriptions_name')]
+    [Parameter(Mandatory, ParameterSetName = 'subscriptions_id')]
+    [Parameter(Mandatory, ParameterSetName = 'subscriptions_self')]
     [switch]$Subscription,
-    [Parameter(Mandatory,ParameterSetName='name')]
+    [Parameter(Mandatory, ParameterSetName = 'name')]
     [Alias('UserName', 'broadcaster_name')][string]$Identity,
-    [Parameter(Mandatory,ParameterSetName='id')]
+    [Parameter(Mandatory, ParameterSetName = 'id')]
     [Alias('broadcaster_id')][string]$IdentityID,
-    [Parameter(Mandatory,ParameterSetName='subscriptions_name')]
+    [Parameter(Mandatory, ParameterSetName = 'subscriptions_name')]
     [string]$CreatorIdentity,
-    [Parameter(Mandatory,ParameterSetName='subscriptions_id')]
+    [Parameter(Mandatory, ParameterSetName = 'subscriptions_id')]
     [string]$CreatorIdentityID,
-    [Parameter(Mandatory,ParameterSetName='subscriptions_self')]
+    [Parameter(Mandatory, ParameterSetName = 'subscriptions_self')]
     [switch]$SelfDownload,
-    [Parameter(ParameterSetName='subscriptions')]
-    [Parameter(ParameterSetName='subscriptions_id')]
-    [Parameter(ParameterSetName='name')]
-    [Parameter(ParameterSetName='id')]
+    [Parameter(ParameterSetName = 'subscriptions')]
+    [Parameter(ParameterSetName = 'subscriptions_id')]
+    [Parameter(ParameterSetName = 'name')]
+    [Parameter(ParameterSetName = 'id')]
     [switch]$VODDownload,
     [string]$FilePath = (Join-Path -Path ~ -ChildPath 'Downloads'),
     [string]$YoutubeDLexe = 'yt-dlp',
@@ -126,7 +126,7 @@ if ($PSVersionTable.Platform -eq 'Win32NT') {
 function Invoke-TwitchCLI {
     param(
         [Parameter(Mandatory)][string]$TwitchCLIexe,
-        [Parameter(Mandatory)][ValidateSet('get','post','put','patch','delete')]
+        [Parameter(Mandatory)][ValidateSet('get', 'post', 'put', 'patch', 'delete')]
         [string]$Command,
         [Parameter(Mandatory)][string]$Template,
         [string[]][Parameter()]$Query
@@ -136,7 +136,7 @@ function Invoke-TwitchCLI {
     $QueryString = ''
     if ($Query.Count -ge 1) {
         $QueryString = '-q ' + ($Query -join ' -q ')
-        $ExecString =  $ExecString + ' ' + $QueryString
+        $ExecString = $ExecString + ' ' + $QueryString
     }
 
     $response = Invoke-Expression $ExecString
@@ -168,9 +168,8 @@ if ($Subscription) {
         $jsonUserFollows = ''
         do {
             try {
-                $jsonUserFollows = Invoke-TwitchCLI -TwitchCLIexe $TwitchCLIexe -Command 'get' -Template '/channels/followed' -Query @("user_id=$IdentityID",'first=100',"after=$UserFollowsPagination")
-            }
-            catch {
+                $jsonUserFollows = Invoke-TwitchCLI -TwitchCLIexe $TwitchCLIexe -Command 'get' -Template '/channels/followed' -Query @("user_id=$IdentityID", 'first=100', "after=$UserFollowsPagination")
+            } catch {
                 Write-Verbose -Message 'An Error occurred while requesting something from the API'
             }
         } until ($null -ne $jsonUserFollows.data)
@@ -226,9 +225,8 @@ foreach ($UserFollow in $UserFollows) {
                 Start-Sleep -Seconds 10
             }
             try {
-                $jsonAccountContents = Invoke-TwitchCLI -TwitchCLIexe $TwitchCLIexe -Command 'get' -Template $AccountContentTemplate -Query @("$AccountContentIDType=$($UserFollow.broadcaster_id)",'first=100',"after=$AccountContentsPagination")
-            }
-            catch {
+                $jsonAccountContents = Invoke-TwitchCLI -TwitchCLIexe $TwitchCLIexe -Command 'get' -Template $AccountContentTemplate -Query @("$AccountContentIDType=$($UserFollow.broadcaster_id)", 'first=100', "after=$AccountContentsPagination")
+            } catch {
                 Write-Verbose -Message 'An Error occurred while requesting something from the API'
             }
             Write-Verbose -Message "API request has $CurrentAPITrials Trials left"
@@ -251,7 +249,7 @@ foreach ($UserFollow in $UserFollows) {
     foreach ($AccountContent in $AccountContents) {
         Write-Progress -Id 1 -Activity "Downloading clips/videos of $($AccountContent.broadcaster_name)" -PercentComplete (($AccountContentsCount / $AccountContents.Count) * 100) -Status "Clip/Video $AccountContentsCount of $($AccountContents.Count)"
         $FileName = $AccountContent.created_at.Year.ToString('0000') + '-' + $AccountContent.created_at.Month.ToString('00') + '-' + $AccountContent.created_at.Day.ToString('00') + '_' + $AccountContent.created_at.Hour.ToString('00') + '#' + $AccountContent.created_at.Minute.ToString('00') + '#' + $AccountContent.created_at.Second.ToString('00') + '_' + $AccountContent.title + '_' + $AccountContent.broadcaster_name + '_' + $AccountContent.creator_name + '.%(ext)s'
-        $FileNameNormalized = $FileName -replace ' ','_' -replace '\\','' -replace '/','' -replace '`n',''
+        $FileNameNormalized = $FileName -replace ' ', '_' -replace '\\', '' -replace '/', '' -replace '`n', ''
         $FullPath = Join-Path -Path $FilePath -ChildPath $FileNameNormalized
         $CurrentDownloadTrials = $DownloadTrials
         do {
