@@ -1,4 +1,4 @@
-# PowerShell_Scripts
+# PowerShell Scripts
 
 Collection of useful PowerShell scripts
 
