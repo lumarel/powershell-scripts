@@ -12,6 +12,7 @@ env:
   APPLY_FIXES: all
   APPLY_FIXES_EVENT: pull_request
   APPLY_FIXES_MODE: commit
+  NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -36,7 +37,7 @@ jobs:
           fetch-depth: 0
 
       - name: MegaLinter
-        uses: oxsecurity/megalinter@v8
+        uses: https://github.com/oxsecurity/megalinter@v9
         id: ml
         env:
           VALIDATE_ALL_CODEBASE: >-
@@ -44,11 +45,12 @@ jobs:
               github.event_name == 'push' &&
               contains(fromJSON('["refs/heads/main", "refs/heads/master"]'), github.ref)
             }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_AUTHORIZATION_BEARER: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_COMMENT_REPORTER: false
 
       - name: Archive production artifacts
         if: success() || failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v3
         with:
           name: MegaLinter reports
           include-hidden-files: "true"
@@ -83,7 +85,7 @@ jobs:
           }}" >> "${GITHUB_ENV}"
 
       - name: Create Pull Request with applied fixes
-        uses: peter-evans/create-pull-request@v7
+        uses: https://github.com/peter-evans/create-pull-request@v7
         id: cpr
         if: env.APPLY_FIXES_IF_PR == 'true'
         with:
@@ -103,7 +105,7 @@ jobs:
         run: sudo chown -Rc $UID .git/
 
       - name: Commit and push applied linter fixes
-        uses: stefanzweifel/git-auto-commit-action@v7
+        uses: https://github.com/stefanzweifel/git-auto-commit-action@v7
         if: env.APPLY_FIXES_IF_COMMIT == 'true'
         with:
           branch: >-
